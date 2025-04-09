@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="src/style.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Kirim Pesan ke Telegram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #111827;
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h2 {
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            resize: none;
+            font-size: 16px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transition: 0.3s;
+        }
+        textarea::placeholder {
+            color: #bbb;
+        }
+        textarea:focus {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #ff4757, #ff1e1e);
+            transform: scale(1.05);
+        }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-content">
+      <i data-lucide="loader-2" class="loading-icon"></i>
+      <p>Loading...</p>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <span class="logo">AkioZamr | アキオザムル</span>
+      <div class="nav-links desktop-nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="store.html" class="nav-link">Store</a>
+        <a href="vanyla.html" class="nav-link">Vanyla Ai | Bot WhatsApp</a>
+        <a href="ngl.html" class="nav-link">NGL</a>
+        <a href="game/game.html" class="nav-link">Game</a>
+      </div>
+      <button id="menu-toggle" class="menu-toggle">
+        <i data-lucide="menu"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div id="sidebar" class="sidebar">
+    <div class="sidebar-content">
+      <button id="close-sidebar" class="close-button">
+        <i data-lucide="x"></i>
+      </button>
+      <div class="sidebar-links">
+        <a href="index.html" class="sidebar-link">
+          <i data-lucide="home"></i>
+          Home
+        </a>
+        <a href="store.html" class="sidebar-link">
+          <i data-lucide="store"></i>
+          Store
+        </a>
+        <a href="vanyla.html" class="sidebar-link">
+          <i data-lucide="bot"></i>
+          About Vanyla Ai
+        </a>
+        <a href="ngl.html" class="sidebar-link">
+          <i data-lucide="mail"></i>
+          NGL
+        </a>
+        <a href="game/game.html" class="sidebar-link">
+          <i data-lucide="gamepad-2"></i>
+          Game
+        </a>
+      </div>
+    </div>
+  </div>
+  
+    <div class="container">
+        <h2>Kirim Pesan ke Telegram</h2>
+        <textarea id="message" placeholder="Tulis pesan di sini..."></textarea>
+        <button id="sendBtn" class="btn" onclick="sendMessage()">Kirim Pesan</button>
+    </div>
+
+    <script>
+        let cooldown = false;
+
+        function sendMessage() {
+            if (cooldown) return;
+
+            var message = document.getElementById("message").value.trim();
+            if (message === "") {
+                alert("Pesan tidak boleh kosong!");
+                return;
+            }
+
+            var botToken = "7952040195:AAF_K80EHCbLei0GMdbwbpMlfp-8Cd843tg";
+            var chatId = "7065763951";
+            var url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        alert("Pesan berhasil dikirim!");
+                        document.getElementById("message").value = ""; // Hapus isi textarea setelah terkirim
+                        startCooldown(5); // Mulai cooldown 5 detik
+                    } else {
+                        alert("Gagal mengirim pesan.");
+                    }
+                })
+                .catch(error => alert("Terjadi kesalahan."));
+        }
+
+        function startCooldown(seconds) {
+            cooldown = true;
+            let btn = document.getElementById("sendBtn");
+            btn.disabled = true;
+            let count = seconds;
+
+            let interval = setInterval(() => {
+                btn.textContent = `Tunggu ${count--} detik...`;
+                if (count < 0) {
+                    clearInterval(interval);
+                    btn.textContent = "Kirim Pesan";
+                    btn.disabled = false;
+                    cooldown = false;
+                }
+            }, 1000);
+        }
+    </script>
+<script src="src/main.js"></script>
+</body>
+</html>

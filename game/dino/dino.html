@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dino Loncat</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="score">
+    Skor: <span id="score">0</span> | High Score: <span id="highScore">0</span>
+  </div>
+
+  <div class="top-controls">
+    <button id="pauseBtn">Pause</button>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+  <div class="game-container">
+    <div class="game">
+      <div class="dino" id="dino">🦖</div>
+      <div class="kaktus" id="kaktus">🌵</div>
+      <div class="game-over-popup" id="gameOverPopup">
+        <div class="popup-content">
+          <h2>Game Over!</h2>
+          <button onclick="restartGame()">Main Lagi</button>
+          <button onclick="window.location.href='../game.html'">Kembali ke Menu</button>
+        </div>
+      </div>
+    </div>
+    <div class="jump-button">
+      <button id="jumpBtn">Lompat</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tic Tac Toe vs AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: #f0f0f0;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: #2a2a2a;
+      border-radius: 20px;
+      font-size: 3em;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+      transform-style: preserve-3d;
+    }
+
+    .cell:hover {
+      background: #3a3a3a;
+      transform: scale(1.08);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+    }
+
+    .cell.X::after {
+      content: attr(data-symbol);
+      position: absolute;
+      color: #4fc3f7;
+      text-shadow: 0 0 12px rgba(79, 195, 247, 0.8);
+    }
+
+    .cell.O::after {
+      content: attr(data-symbol);
+      position: absolute;
+      color: #ff8a80;
+      text-shadow: 0 0 12px rgba(255, 138, 128, 0.8);
+    }
+
+    .cell.X.animate::after,
+    .cell.O.animate::after {
+      animation: flip 0.5s ease-out;
+    }
+
+    @keyframes flip {
+      0% { transform: rotateY(90deg) scale(0.5); opacity: 0; }
+      50% { transform: rotateY(180deg) scale(1.2); opacity: 1; }
+      100% { transform: rotateY(360deg) scale(1); }
+    }
+
+    #status {
+      font-size: 1.2em;
+      color: #cccccc;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 24px;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      background: #00acc1;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #008b9e;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: #1f1f1f;
+      padding: 30px 40px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+      animation: fadeInUp 0.5s ease;
+      color: #f0f0f0;
+    }
+
+    .modal-content h2 {
+      font-size: 2em;
+      margin: 0;
+    }
+
+    .modal-content button {
+      margin-top: 20px;
+    }
+
+    @keyframes fadeInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe vs AI</h1>
+  <div id="board"></div>
+  <div id="status">Giliran Kamu (X)</div>
+  <button onclick="resetGame()">Reset Game</button>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h2 id="modal-message"></h2>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+        <button onclick="closeModal()">Main Lagi</button>
+        <button onclick="goToMenu()">Kembali ke Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const boardElem = document.getElementById("board");
+    const statusElem = document.getElementById("status");
+    const modal = document.getElementById("modal");
+    const modalMessage = document.getElementById("modal-message");
+
+    let board = Array(9).fill(null);
+    let gameOver = false;
+    let lastMoveIndex = -1;
+
+    const WIN_COMBOS = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    function checkWinner(b) {
+      for (let combo of WIN_COMBOS) {
+        const [a, b1, c] = combo;
+        if (b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a];
+      }
+      return b.includes(null) ? null : 'draw';
+    }
+
+    function minimax(newBoard, isMaximizing) {
+      const winner = checkWinner(newBoard);
+      if (winner === 'O') return { score: 1 };
+      if (winner === 'X') return { score: -1 };
+      if (winner === 'draw') return { score: 0 };
+
+      let best;
+      if (isMaximizing) {
+        best = { score: -Infinity };
+        for (let i = 0; i < newBoard.length; i++) {
+          if (newBoard[i] === null) {
+            newBoard[i] = 'O';
+            let score = minimax(newBoard, false).score;
+            newBoard[i] = null;
+            if (score > best.score) best = { score, index: i };
+          }
+        }
+      } else {
+        best = { score: Infinity };
+        for (let i = 0; i < newBoard.length; i++) {
+          if (newBoard[i] === null) {
+            newBoard[i] = 'X';
+            let score = minimax(newBoard, true).score;
+            newBoard[i] = null;
+            if (score < best.score) best = { score, index: i };
+          }
+        }
+      }
+      return best;
+    }
+
+    function aiMove() {
+      const best = minimax([...board], true);
+      makeMove(best.index, 'O');
+    }
+
+    function makeMove(index, player) {
+      if (board[index] || gameOver) return;
+      board[index] = player;
+      lastMoveIndex = index;
+      render();
+      const winner = checkWinner(board);
+      if (winner) {
+        gameOver = true;
+        showModal(winner === 'draw' ? 'Seri!' : (winner === 'X' ? 'Kamu Menang!' : 'AI Menang!'));
+      } else {
+        if (player === 'X') {
+          statusElem.textContent = "Giliran AI...";
+          setTimeout(aiMove, 500);
+        } else {
+          statusElem.textContent = "Giliran Kamu (X)";
+        }
+      }
+    }
+
+    function render() {
+      boardElem.innerHTML = "";
+      board.forEach((cell, i) => {
+        const div = document.createElement("div");
+        div.className = `cell ${cell || ""}`;
+        div.setAttribute("data-symbol", cell || "");
+        if (i === lastMoveIndex) div.classList.add("animate");
+        div.addEventListener("click", () => makeMove(i, 'X'));
+        boardElem.appendChild(div);
+      });
+    }
+
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modal.classList.add("show");
+    }
+
+    function closeModal() {
+      modal.classList.remove("show");
+      resetGame();
+    }
+
+    function goToMenu() {
+      window.location.href = "../game.html";
+    }
+
+    function resetGame() {
+      board = Array(9).fill(null);
+      gameOver = false;
+      lastMoveIndex = -1;
+      statusElem.textContent = "Giliran Kamu (X)";
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
